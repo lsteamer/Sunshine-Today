@@ -7,6 +7,10 @@ import android.os.Bundle;
 import android.util.Log;
 
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,23 +25,23 @@ public class MainActivity extends AppCompatActivity {
     //Inner class that retrieves the source code.
     public class DownloadTask extends AsyncTask<String, Void, String> {
 
+
+
+
+
+
+
+
         @Override
         protected String doInBackground(String... strings) {
-            //String in which the url source code will be stored
-            String resulte = "";
 
-
-            String[] weatherArray;
-
-
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
+            // Declaring outside the try/catch to close them later
             HttpURLConnection urlCon = null;
             BufferedReader reader = null;
 
 
             // Will contain the raw JSON response as a string.
-            String forecastJsonStr = null;
+            String weatherJSONStr = null;
 
             String format = "json";
             String units = "metric";
@@ -48,8 +52,6 @@ public class MainActivity extends AppCompatActivity {
             try {
 
                 // Construct the URL for the OpenWeatherMap query
-                // Possible parameters are available at OWM's forecast API page, at
-                // http://openweathermap.org/API#forecast
 
                 final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?";
                 final String QUERY_PARAM = "q";
@@ -80,15 +82,13 @@ public class MainActivity extends AppCompatActivity {
                 StringBuffer buffer = new StringBuffer();
                 if (inputStream == null) {
                     // Nothing to do.
-                    forecastJsonStr = null;
+                    weatherJSONStr = null;
                 }
                 reader = new BufferedReader(new InputStreamReader(inputStream));
 
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
+                    // Adding a newline as buffer for debugging.
                     buffer.append(line + "\n");
                 }
 
@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
                     // Stream was empty.  No point in parsing.
                     return null;
                 }
-                forecastJsonStr = buffer.toString();
+                weatherJSONStr = buffer.toString();
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -116,19 +116,70 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-            return forecastJsonStr;
 
-
+            return weatherJSONStr;
 
         }
 
+
+
+
+        private String formatHighLows(double high, double low){
+            // For presentation, assume the user only cares about full numbers
+            long roundedHigh = Math.round(high);
+            long roundedLow = Math.round(low);
+
+            String highLowStr = roundedHigh + "/" + roundedLow;
+            return highLowStr;
+        }
 
         @Override
         protected void onPostExecute(String result){
             super.onPostExecute(result);
 
-            Log.i("WebsiteContent",result);
+            try {
+                JSONObject weatherJSONObj = new JSONObject(result);
+                JSONArray weatherArray = weatherJSONObj.getJSONArray("list");
+
+
+                for (int i = 0; i < weatherArray.length(); i++){
+
+                    String main;
+                    String description;
+                    String highAndLow;
+
+                    // Get the JSON object representing the day
+                    JSONObject dayForecast = weatherArray.getJSONObject(i);
+
+
+
+                    // description is in a child array called "weather", which is 1 element long.
+                    JSONObject weatherObject = dayForecast.getJSONArray("weather").getJSONObject(0);
+                    main = weatherObject.getString("main");
+                    description = weatherObject.getString("description");
+
+                    JSONObject temperatureObject = dayForecast.getJSONObject("temp");
+                    double high = temperatureObject.getDouble("max");
+                    double low = temperatureObject.getDouble("min");
+
+                    highAndLow = formatHighLows(high, low);
+
+
+
+
+                    Log.i("Day Forecast",main+" - "+ highAndLow + " - "+description);
+
+                }
+
+
+
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
+
+
     }
 
 
@@ -159,7 +210,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        Log.i("INFO", result);
 
     }
 }
