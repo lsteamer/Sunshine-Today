@@ -1,193 +1,176 @@
 package com.elmexicano.lsteamer.sunshinetoday;
 
-import android.net.Uri;
-import android.os.AsyncTask;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 
-import com.google.android.gms.location.FusedLocationProviderApi;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    private FusedLocationProviderApi locationProviderApi = LocationServices.FusedLocationApi;
+    //If app is offline
+    private static final String NOT_ONLINE = "No connection detected. Please check your Internet connection or wait until the servers are back online and restart the app";
 
-
-
-    //Inner class that retrieves the source code.
-    public class DownloadTask extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String... strings) {
-
-            // Declaring outside the try/catch to close them later
-            HttpURLConnection urlCon = null;
-            BufferedReader reader = null;
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
+    private DownloadTask weatherAsyncTask = null;
 
 
-            // Will contain the raw JSON response as a string.
-            String weatherJSONStr = null;
-
-            String format = "json";
-            String units = "metric";
-            String appid = "e646b9ad2e82a2f2b6afcf8741f70f96";
-            int numDays = 7;
+    //Array List that will hold the weather forecast.
+    private ArrayList<String> weatherForecast = new ArrayList<String>();
 
 
+    private LocationManager locationManager;
+    private String latitude, longitude;
 
+    @Override
+    public void onConnected(Bundle connectionHint) {
 
-            try {
-
-                // Construct the URL for the OpenWeatherMap query
-
-                final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?";
-                final String LATITUDE_PARAM = "lat";
-                final String LONGITUDE_PARAM = "lot";
-                final String FORMAT_PARAM = "mode";
-                final String UNITS_PARAM = "units";
-                final String DAYS_PARAM = "cnt";
-                final String APPID_PARAM = "APPID";
-
-                Uri UriU = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                        .appendQueryParameter(LATITUDE_PARAM, strings[0])
-                        .appendQueryParameter(LONGITUDE_PARAM, strings[1])
-                        .appendQueryParameter(FORMAT_PARAM, format)
-                        .appendQueryParameter(UNITS_PARAM, units)
-                        .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
-                        .appendQueryParameter(APPID_PARAM, appid)
-                        .build();
-
-                //Read the URL
-                URL url = new URL(UriU.toString());
-
-
-
-                //Accessing the URL
-                urlCon = (HttpURLConnection) url.openConnection();
-                urlCon.setRequestMethod("GET");
-                urlCon.connect();
-
-
-                Log.i("Day Forecast","Nope4");
-
-                // Read the input stream into a String
-                InputStream inputStream = urlCon.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-
-                if (inputStream == null) {
-                    // Nothing to do.
-                    weatherJSONStr = null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Adding a newline as buffer for debugging.
-                    buffer.append(line + "\n");
-                }
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                weatherJSONStr = buffer.toString();
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                return "ERROR";
-            } catch (IOException e){
-                e.printStackTrace();
-                return "ERROR";
-            }finally {
-                if (urlCon != null) {
-                    urlCon.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e("ForecastFragment", "Error closing stream", e);
-                    }
-                }
-            }
-
-            return weatherJSONStr;
-
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            //Asking for permission to use the thing
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
         }
 
 
-
-
-        private String formatHighLows(double high, double low){
-            // For presentation, assume the user only cares about full numbers
-            long roundedHigh = Math.round(high);
-            long roundedLow = Math.round(low);
-
-            String highLowStr = roundedHigh + "/" + roundedLow;
-            return highLowStr;
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                mGoogleApiClient);
+        if (mLastLocation != null) {
+            latitude = Double.toString(mLastLocation.getLatitude());
+            longitude = Double.toString(mLastLocation.getLongitude());
         }
 
-        @Override
-        protected void onPostExecute(String result){
-            super.onPostExecute(result);
+        if(weatherAsyncTask==null){
+            weatherAsyncTask = new DownloadTask();
 
+
+            //String to receive the code
+            String uncleanedJsonCode="";
             try {
-                JSONObject weatherJSONObj = new JSONObject(result);
-                JSONArray weatherJSONArray = weatherJSONObj.getJSONArray("list");
-
-
-                for (int i = 0; i < weatherJSONArray.length(); i++){
-
-                    String mainTemperature;
-                    String description;
-                    String highAndLow;
-
-                    // Get the JSON object representing the day
-                    JSONObject dayForecast = weatherJSONArray.getJSONObject(i);
-
-
-
-                    // description is in a child array called "weather", which is 1 element long.
-                    JSONObject weatherObject = dayForecast.getJSONArray("weather").getJSONObject(0);
-                    mainTemperature = weatherObject.getString("main");
-                    description = weatherObject.getString("description");
-
-                    JSONObject temperatureObject = dayForecast.getJSONObject("temp");
-
-                    double high = temperatureObject.getDouble("max");
-                    double low = temperatureObject.getDouble("min");
-
-                    highAndLow = formatHighLows(high, low);
-
-                    Log.i("Day Forecast",mainTemperature+" - "+ highAndLow + " - "+description);
-
-                }
-
-
-
-
-            } catch (JSONException e) {
+                uncleanedJsonCode = weatherAsyncTask.execute(latitude,longitude).get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
                 e.printStackTrace();
             }
+
+            if(uncleanedJsonCode!="ERROR"){
+
+
+                jsonCleaner(uncleanedJsonCode);
+
+            }
+            else{
+                Toast.makeText(this, NOT_ONLINE,
+                        Toast.LENGTH_LONG).show();
+            }
+
+        }
+    }
+
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+        Toast.makeText(this, NOT_ONLINE,
+                Toast.LENGTH_LONG).show();
+
+        /*
+            Fill with placeholder info.
+         */
+
+    }
+
+    @Override
+    protected void onStart() {
+        mGoogleApiClient.connect();
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        mGoogleApiClient.disconnect();
+        super.onStop();
+    }
+
+    //JSON info gets sent and cleans the relevant info
+    public void jsonCleaner(String result) {
+
+        try {
+
+
+            JSONObject weatherJSONObj = new JSONObject(result);
+            JSONArray weatherJSONArray = weatherJSONObj.getJSONArray("list");
+
+
+
+
+
+            for (int i = 0; i < weatherJSONArray.length(); i++) {
+
+                String mainTemperature;
+                String description;
+                String highAndLow;
+
+                // Get the JSON object representing the day
+                JSONObject dayForecast = weatherJSONArray.getJSONObject(i);
+
+
+                // description is in a child array called "weather", which is 1 element long.
+                JSONObject weatherObject = dayForecast.getJSONArray("weather").getJSONObject(0);
+                mainTemperature = weatherObject.getString("main");
+                description = weatherObject.getString("description");
+
+                JSONObject temperatureObject = dayForecast.getJSONObject("temp");
+
+                double high = temperatureObject.getDouble("max");
+                double low = temperatureObject.getDouble("min");
+
+                highAndLow = formatHighLows(high, low);
+
+                Log.i("Day Forecast", mainTemperature + " - " + highAndLow + " - " + description);
+
+
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
 
     }
 
+    //Gives you an average for the day temperature
+    private String formatHighLows(double high, double low) {
+        // For presentation, assume the user only cares about full numbers
+        long roundedHigh = Math.round(high);
+        long roundedLow = Math.round(low);
+
+        String highLowStr = roundedHigh + "/" + roundedLow;
+        return highLowStr;
+    }
 
 
 
@@ -198,27 +181,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        //String that catches the result
-        String  result="";
-
-        //AsyncTask Class
-        DownloadTask task = new DownloadTask();
-
-
-        try {
-            result = task.execute("52.5200","13.4050").get();
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
         }
 
 
-
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            //Asking for permission to use the thing
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+        }
     }
+
+
 }
-
-
-
-
