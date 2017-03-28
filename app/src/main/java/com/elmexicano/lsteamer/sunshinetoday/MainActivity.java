@@ -31,6 +31,8 @@ import com.google.android.gms.location.LocationServices;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.Calendar;
@@ -53,8 +55,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     //If app is offline
     private static final String NOT_ONLINE = "No connection detected. Please check your Internet connection or wait until the servers are back online and restart the app";
 
-    //Metric or Imperial. To change on Settings, but for now
+    //Variables that might be changed in Settings later on
     private static final String UNITS = "metric";
+    private static final String DAYS = "12";
 
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
@@ -91,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             //String to receive the code
             String uncleanedJsonCode="";
             try {
-                uncleanedJsonCode = weatherAsyncTask.execute(latitude,longitude,UNITS).get();
+                uncleanedJsonCode = weatherAsyncTask.execute(latitude,longitude,UNITS,DAYS).get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {
@@ -147,8 +150,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void jsonCleaner(String result) {
 
         ArrayList<String> table = new ArrayList<String>();
+
+
         cal = Calendar.getInstance();
-        int dayOfMonth;
+        SimpleDateFormat dayDateStack = new SimpleDateFormat("EEE, MMM d");
 
         try {
 
@@ -184,13 +189,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
                 highAndLow = formatHighLows(high, low);
 
-                Log.i("Day Forecast", mainTemperature + " - " + highAndLow + " - " + description);
                 if(i!=0){
-                    /**
-                     * ADD THE DAY OF THE MONTH AS A STRING
-                     */
 
-                    table.add(mainTemperature + " - " + highAndLow + " - " + description);
+                    //Getting the calendar instance and then getting
+                    cal = Calendar.getInstance();
+                    cal.add(Calendar.DAY_OF_YEAR, i);
+
+                    //table.add(String.format("%s %-20s: %s",dayDateStack.format(cal.getTime()), mainTemperature, highAndLow));
+
+                    table.add(dayDateStack.format(cal.getTime()) +" -    " +description + ": " + highAndLow );
                 }
 
 
@@ -210,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         long roundedHigh = Math.round(high);
         long roundedLow = Math.round(low);
 
-        String highLowStr = roundedHigh + "/" + roundedLow;
+        String highLowStr = roundedHigh + "\u00B0/" + roundedLow+"\u00B0";
         return highLowStr;
     }
 

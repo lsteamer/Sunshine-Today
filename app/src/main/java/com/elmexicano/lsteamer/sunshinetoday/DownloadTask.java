@@ -29,7 +29,6 @@ class DownloadTask extends AsyncTask<String, Void, String> {
 
         String format = "json";
         String appid = "e646b9ad2e82a2f2b6afcf8741f70f96";
-        int numDays = 12;
 
 
         try {
@@ -49,7 +48,7 @@ class DownloadTask extends AsyncTask<String, Void, String> {
                     .appendQueryParameter(LONGITUDE_PARAM, strings[1])
                     .appendQueryParameter(FORMAT_PARAM, format)
                     .appendQueryParameter(UNITS_PARAM, strings[2])
-                    .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
+                    .appendQueryParameter(DAYS_PARAM,  strings[3])
                     .appendQueryParameter(APPID_PARAM, appid)
                     .build();
 
