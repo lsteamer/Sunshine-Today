@@ -28,9 +28,8 @@ class DownloadTask extends AsyncTask<String, Void, String> {
         String weatherJSONStr = null;
 
         String format = "json";
-        String units = "metric";
         String appid = "e646b9ad2e82a2f2b6afcf8741f70f96";
-        int numDays = 7;
+        int numDays = 12;
 
 
         try {
@@ -49,7 +48,7 @@ class DownloadTask extends AsyncTask<String, Void, String> {
                     .appendQueryParameter(LATITUDE_PARAM, strings[0])
                     .appendQueryParameter(LONGITUDE_PARAM, strings[1])
                     .appendQueryParameter(FORMAT_PARAM, format)
-                    .appendQueryParameter(UNITS_PARAM, units)
+                    .appendQueryParameter(UNITS_PARAM, strings[2])
                     .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
                     .appendQueryParameter(APPID_PARAM, appid)
                     .build();
