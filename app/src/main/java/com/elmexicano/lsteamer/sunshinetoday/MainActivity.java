@@ -2,6 +2,9 @@ package com.elmexicano.lsteamer.sunshinetoday;
 
 
 import android.Manifest;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -11,7 +14,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -104,7 +106,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             if(uncleanedJsonCode!="ERROR"){
 
 
-                jsonCleaner(uncleanedJsonCode);
+                String[] weatherInfo = jsonCleaner(uncleanedJsonCode);
+
+                tab1.populateScreen(weatherInfo);
+                setNotification(latitude,longitude);
 
             }
             else{
@@ -147,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     //JSON info gets sent and cleans the relevant info.
     //Also the pertinent methods get called
-    public void jsonCleaner(String result) {
+    public String[] jsonCleaner(String result) {
 
         ArrayList<String> table = new ArrayList<String>();
 
@@ -155,6 +160,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         cal = Calendar.getInstance();
         SimpleDateFormat dayDateStack = new SimpleDateFormat("EEE, MMM d");
 
+        String[] weatherInfoStrings = new String[9];
+        String locationWeather="";
         try {
 
 
@@ -162,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             //String that will get the Name of the location.
             JSONObject cityInfo = weatherJSONObj.getJSONObject("city");
-            String cityName = cityInfo.getString("name");
+            locationWeather = cityInfo.getString("name");
 
             //And the following process will get the info for all of the Following days.
             JSONArray weatherJSONArray = weatherJSONObj.getJSONArray("list");
@@ -172,6 +179,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 String mainTemperature;
                 String description;
                 String highAndLow;
+                String imageId;
 
                 // Get the JSON object representing the day
                 JSONObject dayForecast = weatherJSONArray.getJSONObject(i);
@@ -181,6 +189,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 JSONObject weatherObject = dayForecast.getJSONArray("weather").getJSONObject(0);
                 mainTemperature = weatherObject.getString("main");
                 description = weatherObject.getString("description");
+                imageId = weatherObject.getString("id");
+                description = description.substring(0,1).toUpperCase() + description.substring(1);
 
                 JSONObject temperatureObject = dayForecast.getJSONObject("temp");
 
@@ -191,22 +201,39 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
                 if(i!=0){
 
-                    //Getting the calendar instance and then getting
                     cal = Calendar.getInstance();
+                    //Getting the calendar instance and then getting
                     cal.add(Calendar.DAY_OF_YEAR, i);
 
                     //table.add(String.format("%s %-20s: %s",dayDateStack.format(cal.getTime()), mainTemperature, highAndLow));
 
                     table.add(dayDateStack.format(cal.getTime()) +" -    " +description + ": " + highAndLow );
                 }
+                else{
+                    weatherInfoStrings [1] = Long.toString(Math.round((high+low)/2)) + "\u00B0";
+                    weatherInfoStrings [2] = mainTemperature;
+                    weatherInfoStrings [3] = description;
+                    weatherInfoStrings [4] = highAndLow;
+                    weatherInfoStrings [5] = imageId;
+                    weatherInfoStrings [7] = Long.toString(Math.round((high)));
+                    weatherInfoStrings [8] = Long.toString(Math.round((low)));
+                }
 
 
             }
 
+
+            if(weatherJSONArray.length()>1)
+                tab2.populateList(table);
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        tab2.populateList(table);
+        dayDateStack = new SimpleDateFormat("MMMM d, h:mm a");
+        weatherInfoStrings[0]=dayDateStack.format(cal.getTime())+" - "+ locationWeather;
+        weatherInfoStrings[6] = locationWeather;
+
+        return weatherInfoStrings;
 
 
     }
@@ -229,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //Creating the GoogleApiClient for the Locatization
+        //Creating the GoogleApiClient for the Locale
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -246,20 +273,49 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
         //The Toolbar for whenever we decide to implement it
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        //setSupportActionBar(toolbar);
 
-        // An Adapter returning a Fragment for each of the sections used
+        // An Adapter returning a Fragment for each of the sections used in the tabs
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
+        //The Tab layout
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
 
+    }
+
+
+
+    protected void setNotification(String lat, String lon){
+
+
+        cal = Calendar.getInstance();
+        //Setting the notification
+        cal.set(Calendar.HOUR_OF_DAY,06);
+        cal.set(Calendar.MINUTE,35);
+
+        //This intent will lead to the Broadcast receiver
+        Intent notificationIntent = new Intent(getApplicationContext(),Notification_receiver.class);
+
+        //Adding Longitute and Latitude
+        notificationIntent.putExtra("Latitude",lat);
+        notificationIntent.putExtra("Longitude",lon);
+
+
+        //Pending intent for the Notification(Intent) created above)
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(),0,notificationIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+        //Instance of the alarm Manager
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        //Setting the Alarm. RTC_WAKEUP will Go even if the device is sleep, next is when is the alarm going off, next is how often (INTERVAL_DAY is each a day)
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),AlarmManager.INTERVAL_DAY,pendingIntent);
     }
 
 
@@ -317,9 +373,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "SECTION 1";
+                    return "Today";
                 case 1:
-                    return "SECTION 2";
+                    return "Next Days";
             }
             return null;
         }
