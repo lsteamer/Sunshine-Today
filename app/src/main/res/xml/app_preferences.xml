@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="General">
+        <EditTextPreference
+            android:title="Change Location"
+            android:summary="Type a new Postal Code"
+            android:key="postal_code"
+            android:numeric="integer"
+            />
+        <ListPreference
+            android:key="degree_preference"
+            android:title="Degrees"
+            android:entries="@array/settings_degree_name"
+            android:entryValues="@array/settings_degree_value"/>
+
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Notifications">
+        <CheckBoxPreference
+            android:title="Get Notifications"
+            android:summary="Get daily weather forecast Notifications"
+            android:key="daily_notifications"
+            android:defaultValue="true"
+            />
+        <EditTextPreference
+            android:title="Notification time"
+            android:dependency="daily_notifications"
+            android:summary="Change the time for the daily Notification."
+            android:key="time"
+            />
+
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -5,6 +5,8 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
@@ -37,11 +39,12 @@ public class Notification_receiver extends BroadcastReceiver {
 
         //Instance of the Pending Intent to show the notification.
         PendingIntent pendingIntent = PendingIntent.getActivity(context,237,repeating_intent,PendingIntent.FLAG_UPDATE_CURRENT);
-
+        Bitmap icon = BitmapFactory.decodeResource(context.getResources(), Tab1Today.getWeatherImage(Integer.valueOf(textsForNotification[2])) );
         //Building the actual notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setContentIntent(pendingIntent)
-                .setSmallIcon(R.drawable.w800)
+                .setSmallIcon(R.drawable.sundog_transparent)
+                .setLargeIcon(icon)
                 .setContentTitle(textsForNotification[0])
                 .setContentText(textsForNotification[1])
                 .setAutoCancel(true);
@@ -54,7 +57,7 @@ public class Notification_receiver extends BroadcastReceiver {
     public String[] fillInText(String latitude, String longitude){
         DownloadTask weatherAsyncTask = new DownloadTask();
         MainActivity cleaner = new MainActivity();
-        String[] backNotify = new String[2];
+        String[] backNotify = new String[3];
         //String to receive the code
         String uncleanedJsonCode="";
         try {
@@ -74,6 +77,7 @@ public class Notification_receiver extends BroadcastReceiver {
 
             backNotify[0] = "Forecast for " + notificationDateFormat.format(cal.getTime());
             backNotify[1] = "Today's highest will be "+ weatherInfo[7]+ "\u00B0";
+            backNotify[2] = weatherInfo[5];
 
 
         }

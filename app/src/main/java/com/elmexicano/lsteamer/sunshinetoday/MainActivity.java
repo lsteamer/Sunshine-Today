@@ -5,9 +5,11 @@ import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -199,7 +201,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
                 highAndLow = formatHighLows(high, low);
 
-                if(i!=0){
+                if(i==0){
+                    weatherInfoStrings [1] = Long.toString(Math.round((high+low)/2)) + "\u00B0";
+                    weatherInfoStrings [2] = mainTemperature;
+                    weatherInfoStrings [3] = description;
+                    weatherInfoStrings [4] = highAndLow;
+                    weatherInfoStrings [5] = imageId;
+                    weatherInfoStrings [7] = Long.toString(Math.round((high)));
+                    weatherInfoStrings [8] = Long.toString(Math.round((low)));
+                }
+                else{
 
                     cal = Calendar.getInstance();
                     //Getting the calendar instance and then getting
@@ -208,15 +219,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     //table.add(String.format("%s %-20s: %s",dayDateStack.format(cal.getTime()), mainTemperature, highAndLow));
 
                     table.add(dayDateStack.format(cal.getTime()) +" -    " +description + ": " + highAndLow );
-                }
-                else{
-                    weatherInfoStrings [1] = Long.toString(Math.round((high+low)/2)) + "\u00B0";
-                    weatherInfoStrings [2] = mainTemperature;
-                    weatherInfoStrings [3] = description;
-                    weatherInfoStrings [4] = highAndLow;
-                    weatherInfoStrings [5] = imageId;
-                    weatherInfoStrings [7] = Long.toString(Math.round((high)));
-                    weatherInfoStrings [8] = Long.toString(Math.round((low)));
                 }
 
 
@@ -229,6 +231,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        cal = Calendar.getInstance();
         dayDateStack = new SimpleDateFormat("MMMM d, h:mm a");
         weatherInfoStrings[0]=dayDateStack.format(cal.getTime())+" - "+ locationWeather;
         weatherInfoStrings[6] = locationWeather;
@@ -273,8 +277,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
         //The Toolbar for whenever we decide to implement it
-        //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        //setSupportActionBar(toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         // An Adapter returning a Fragment for each of the sections used in the tabs
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -320,12 +324,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
 
-    /*
-     *
-     *
-     *
-     * THIS IS THE SETTINGS BUTTON.
-     * FUNCTIONALITY WILL COME LATER
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -338,13 +337,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent = new Intent(this, AppPreferences.class);
+            startActivity(intent);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-     */
+    private void loadPreferences(){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        
+    }
+
+
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 

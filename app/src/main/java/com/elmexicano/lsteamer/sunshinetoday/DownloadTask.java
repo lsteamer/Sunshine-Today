@@ -43,6 +43,8 @@ class DownloadTask extends AsyncTask<String, Void, String> {
             final String DAYS_PARAM = "cnt";
             final String APPID_PARAM = "APPID";
 
+            Log.i("WATWAT"," :-"+ strings.length);
+
             Uri UriU = Uri.parse(FORECAST_BASE_URL).buildUpon()
                     .appendQueryParameter(LATITUDE_PARAM, strings[0])
                     .appendQueryParameter(LONGITUDE_PARAM, strings[1])

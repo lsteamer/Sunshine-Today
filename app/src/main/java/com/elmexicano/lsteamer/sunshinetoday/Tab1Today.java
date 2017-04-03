@@ -67,6 +67,11 @@ public class Tab1Today extends Fragment{
         }
         return -1;
     }
+    public static boolean getSunOrMoon(){
+
+        return true;
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
