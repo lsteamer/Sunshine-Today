@@ -4,7 +4,12 @@
     tools:context="com.elmexicano.lsteamer.sunshinetoday.MainActivity">
     <item
         android:id="@+id/action_settings"
-        android:orderInCategory="100"
+        android:orderInCategory="80"
         android:title="@string/action_settings"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/why_about"
+        android:orderInCategory="100"
+        android:title="@string/why_about"
         app:showAsAction="never" />
 </menu>

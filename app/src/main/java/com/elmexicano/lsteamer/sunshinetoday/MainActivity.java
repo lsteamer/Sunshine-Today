@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -16,6 +17,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -57,11 +59,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private Tab2Days tab2 = new Tab2Days();
 
     //If app is offline
-    private static final String NOT_ONLINE = "No connection detected. Please check your Internet connection or wait until the servers are back online and restart the app";
+    private static final String NOT_ONLINE = "No connection detected or incorrect values entered. Please check them again and reload the app.";
 
     //Variables that might be changed in Settings later on
-    private static final String UNITS = "metric";
-    private static final String DAYS = "12";
+    private String units;
+    private String days;
+    private String latitude="";
+    private String longitude="";
+    private String postalCode="";
+    private boolean notification=true;
+
 
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
@@ -73,7 +80,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     private LocationManager locationManager;
-    private String latitude, longitude;
 
     @Override
     public void onConnected(Bundle connectionHint) {
@@ -98,7 +104,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             //String to receive the code
             String uncleanedJsonCode="";
             try {
-                uncleanedJsonCode = weatherAsyncTask.execute(latitude,longitude,UNITS,DAYS).get();
+                //if we don't have a new Postal Code to try out
+                if(postalCode==null)
+                    uncleanedJsonCode = weatherAsyncTask.execute(latitude,longitude,units,days).get();
+                else
+                    uncleanedJsonCode = weatherAsyncTask.execute(postalCode,units,days).get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {
@@ -253,12 +263,33 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
 
+    @Override
+    public void onSaveInstanceState(Bundle bundle){
+        super.onSaveInstanceState(bundle);
 
+        //Variables that help build the app
+        bundle.putString("Latitude",latitude);
+        bundle.putString("Longitude",longitude);
+        bundle.putString("Days",days);
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+
+
+        if(savedInstanceState!=null){
+
+            latitude = (String) savedInstanceState.get("Latitude");
+            longitude = (String) savedInstanceState.get("Longitude");
+        }
+
 
         //Creating the GoogleApiClient for the Locale
         if (mGoogleApiClient == null) {
@@ -291,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
-
+        loadPreferences();
     }
 
 
@@ -342,12 +373,61 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             return true;
         }
 
+        if (id == R.id.why_about) {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://en.wikipedia.org/wiki/Sun_dog"));
+            startActivity(browserIntent);
+            return true;
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
     private void loadPreferences(){
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        
+        units = sharedPreferences.getString("degree_preference","metric");
+        days = sharedPreferences.getString("day_preference","10");
+        postalCode = sharedPreferences.getString("postal_code",null);
+        if(weatherAsyncTask!=null)
+            refillApp();
+
+
+    }
+
+    private void refillApp(){
+        //For some reason constantly calling weatherAsyncTask caused the app to crash
+        weatherAsyncTask=null;
+        weatherAsyncTask = new DownloadTask();
+
+        Log.i("watwat",postalCode);
+        //String to receive the code
+        String uncleanedJsonCode="";
+        try {
+            //if we don't have a new Postal Code to try out
+            if(postalCode==null)
+                uncleanedJsonCode = weatherAsyncTask.execute(latitude,longitude,units,days).get();
+            else
+                uncleanedJsonCode = weatherAsyncTask.execute(postalCode,units,days).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        if(uncleanedJsonCode!="ERROR"){
+
+
+            String[] weatherInfo = jsonCleaner(uncleanedJsonCode);
+
+            tab1.populateScreen(weatherInfo);
+            setNotification(latitude,longitude);
+
+        }
+        else{
+            Toast.makeText(this, NOT_ONLINE,
+                    Toast.LENGTH_LONG).show();
+        }
+
+
     }
 
 

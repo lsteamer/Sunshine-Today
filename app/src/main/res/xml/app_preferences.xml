@@ -13,6 +13,11 @@
             android:title="Degrees"
             android:entries="@array/settings_degree_name"
             android:entryValues="@array/settings_degree_value"/>
+        <ListPreference
+            android:key="day_preference"
+            android:title="Days Shown"
+            android:entries="@array/settings_days_name"
+            android:entryValues="@array/settings_days_value"/>
 
     </PreferenceCategory>
     <PreferenceCategory

@@ -38,21 +38,37 @@ class DownloadTask extends AsyncTask<String, Void, String> {
             final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?";
             final String LATITUDE_PARAM = "lat";
             final String LONGITUDE_PARAM = "lon";
+            final String POSTAL_CODE = "q";
             final String FORMAT_PARAM = "mode";
             final String UNITS_PARAM = "units";
             final String DAYS_PARAM = "cnt";
             final String APPID_PARAM = "APPID";
+            Uri UriU;
 
-            Log.i("WATWAT"," :-"+ strings.length);
 
-            Uri UriU = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                    .appendQueryParameter(LATITUDE_PARAM, strings[0])
-                    .appendQueryParameter(LONGITUDE_PARAM, strings[1])
-                    .appendQueryParameter(FORMAT_PARAM, format)
-                    .appendQueryParameter(UNITS_PARAM, strings[2])
-                    .appendQueryParameter(DAYS_PARAM,  strings[3])
-                    .appendQueryParameter(APPID_PARAM, appid)
-                    .build();
+            if(strings.length==4){
+
+                UriU = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                        .appendQueryParameter(LATITUDE_PARAM, strings[0])
+                        .appendQueryParameter(LONGITUDE_PARAM, strings[1])
+                        .appendQueryParameter(FORMAT_PARAM, format)
+                        .appendQueryParameter(UNITS_PARAM, strings[2])
+                        .appendQueryParameter(DAYS_PARAM,  strings[3])
+                        .appendQueryParameter(APPID_PARAM, appid)
+                        .build();
+
+            }
+            else{
+
+                UriU = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                        .appendQueryParameter(POSTAL_CODE, strings[0])
+                        .appendQueryParameter(FORMAT_PARAM, format)
+                        .appendQueryParameter(UNITS_PARAM, strings[1])
+                        .appendQueryParameter(DAYS_PARAM,  strings[2])
+                        .appendQueryParameter(APPID_PARAM, appid)
+                        .build();
+
+            }
 
             //Read the URL
             URL url = new URL(UriU.toString());
