@@ -17,7 +17,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -66,8 +65,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private String days;
     private String latitude="";
     private String longitude="";
-    private String postalCode="";
-    private boolean notification=true;
+    private String postalCode;
+    private boolean locationCurrent;
+    private boolean notificationActive;
+    private String notificationTime="1";
 
 
     private GoogleApiClient mGoogleApiClient;
@@ -121,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 String[] weatherInfo = jsonCleaner(uncleanedJsonCode);
 
                 tab1.populateScreen(weatherInfo);
-                setNotification(latitude,longitude);
+                setNotification(latitude,longitude,notificationActive,units);
 
             }
             else{
@@ -270,7 +271,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         //Variables that help build the app
         bundle.putString("Latitude",latitude);
         bundle.putString("Longitude",longitude);
-        bundle.putString("Days",days);
 
     }
 
@@ -326,31 +326,43 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
 
+    //Sets or deactivates the Notification
+    protected void setNotification(String lat, String lon, boolean activeNotification, String unitValue){
 
-    protected void setNotification(String lat, String lon){
 
-
-        cal = Calendar.getInstance();
+        Calendar calen = Calendar.getInstance();
+        calen.set(Calendar.MINUTE, 30);
+        calen.set(Calendar.HOUR_OF_DAY, 06);
         //Setting the notification
-        cal.set(Calendar.HOUR_OF_DAY,06);
-        cal.set(Calendar.MINUTE,35);
 
-        //This intent will lead to the Broadcast receiver
-        Intent notificationIntent = new Intent(getApplicationContext(),Notification_receiver.class);
-
-        //Adding Longitute and Latitude
-        notificationIntent.putExtra("Latitude",lat);
-        notificationIntent.putExtra("Longitude",lon);
+        if(activeNotification) {
+            calen.set(Calendar.MINUTE, 0);
 
 
-        //Pending intent for the Notification(Intent) created above)
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(),0,notificationIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+            //This intent will lead to the Broadcast receiver
+            Intent notificationIntent = new Intent(getApplicationContext(), Notification_receiver.class);
 
-        //Instance of the alarm Manager
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            //Adding Longitute and Latitude
+            notificationIntent.putExtra("Latitude", lat);
+            notificationIntent.putExtra("Longitude", lon);
+            notificationIntent.putExtra("Unit",unitValue);
 
-        //Setting the Alarm. RTC_WAKEUP will Go even if the device is sleep, next is when is the alarm going off, next is how often (INTERVAL_DAY is each a day)
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),AlarmManager.INTERVAL_DAY,pendingIntent);
+
+            //Pending intent for the Notification(Intent) created above)
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 237, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            //Instance of the alarm Manager
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+            //Setting the Alarm. RTC_WAKEUP will Go even if the device is sleep, next is when is the alarm going off, next is how often (INTERVAL_DAY is each a day)
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calen.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+        }
+        else{
+            Intent intent = new Intent(this, Notification_receiver.class);
+            PendingIntent sender = PendingIntent.getBroadcast(getApplicationContext(), 237, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            alarmManager.cancel(sender);
+        }
     }
 
 
@@ -386,13 +398,22 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         units = sharedPreferences.getString("degree_preference","metric");
         days = sharedPreferences.getString("day_preference","10");
-        postalCode = sharedPreferences.getString("postal_code",null);
+        notificationActive = sharedPreferences.getBoolean("daily_notifications",true);
+        locationCurrent = sharedPreferences.getBoolean("location_preference",true);
+        if(locationCurrent)
+            postalCode = null;
+        else
+            postalCode = sharedPreferences.getString("postal_code",null);
+
+        /*
         if(weatherAsyncTask!=null)
             refillApp();
+        * */
 
 
     }
-
+    /*
+    CODE THAT MIGHT BE RENDERED USELESS
     private void refillApp(){
         //For some reason constantly calling weatherAsyncTask caused the app to crash
         weatherAsyncTask=null;
@@ -429,7 +450,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     }
-
+    */
 
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
