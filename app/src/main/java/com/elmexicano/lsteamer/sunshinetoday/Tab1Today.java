@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.Calendar;
+
 
 public class Tab1Today extends Fragment{
 
@@ -40,8 +42,11 @@ public class Tab1Today extends Fragment{
 
     }
     public static int getWeatherImage(int weatherId) {
-        // Based on weather code data found at:
-        // http://bugs.openweathermap.org/projects/api/wiki/Weather_Condition_Codes
+
+        //Showing different icons if it's nighttime
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+
         if (weatherId >= 200 && weatherId <= 232)
             return R.drawable.storm;
         else if (weatherId >= 300 && weatherId <= 321)
@@ -59,12 +64,18 @@ public class Tab1Today extends Fragment{
         else if (weatherId == 761 || weatherId == 781)
             return R.drawable.storm;
         else if (weatherId == 800) {
-            return R.drawable.clear_day;
+            //Checking for day/night cycles
+            if(hour>=6&&hour<18)
+                return R.drawable.clear_day;
+            else
+                return R.drawable.clear_night;
         } else if (weatherId == 801) {
-            return R.drawable.light_clouds_day;
-        } else if (weatherId >= 802 && weatherId <= 804) {
+            if(hour>=6&&hour<=18)
+                return R.drawable.light_clouds_day;
+            else
+                return R.drawable.light_clouds_night;
+        } else if (weatherId >= 802 && weatherId <= 804)
             return R.drawable.cloudy;
-        }
         return -1;
     }
     public static boolean getSunOrMoon(){
