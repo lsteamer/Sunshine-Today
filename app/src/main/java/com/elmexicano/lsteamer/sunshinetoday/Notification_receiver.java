@@ -58,7 +58,7 @@ public class Notification_receiver extends BroadcastReceiver {
         MainActivity cleaner = new MainActivity();
         String[] backNotify = new String[3];
         //String to receive the code
-        String uncleanedJsonCode="";
+        String [] uncleanedJsonCode = new String[2];
         try {
             uncleanedJsonCode = weatherAsyncTask.execute(latitude,longitude,"metric","1").get();
         } catch (InterruptedException e) {
@@ -67,15 +67,17 @@ public class Notification_receiver extends BroadcastReceiver {
             e.printStackTrace();
         }
 
-        if(uncleanedJsonCode!="ERROR"){
+        if(uncleanedJsonCode[1]!="ERROR"){
 
             Calendar cal = Calendar.getInstance();
             SimpleDateFormat notificationDateFormat = new SimpleDateFormat("EEE MMM d");
 
-            String[] weatherInfo = cleaner.jsonCleaner(uncleanedJsonCode);
-
+            String[] weatherInfo = cleaner.jsonCleaner(uncleanedJsonCode[1]);
+            //Today's date
             backNotify[0] = "Forecast for " + notificationDateFormat.format(cal.getTime());
+            //Today's highest
             backNotify[1] = "Today's highest will be "+ weatherInfo[7]+ "\u00B0";
+            //Today's image
             backNotify[2] = weatherInfo[5];
 
 

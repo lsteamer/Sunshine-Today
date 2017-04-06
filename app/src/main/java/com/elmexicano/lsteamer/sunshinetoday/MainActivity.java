@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
             //String to receive the code
-            String uncleanedJsonCode="";
+            String[] uncleanedJsonCode= new String[2];
             try {
                 //if we don't have a new Postal Code to try out
                 if(postalCode==null)
@@ -116,10 +116,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 e.printStackTrace();
             }
 
-            if(uncleanedJsonCode!="ERROR"){
+            if(uncleanedJsonCode[1]!="ERROR"){
 
 
-                String[] weatherInfo = jsonCleaner(uncleanedJsonCode);
+                String[] weatherInfo = jsonCleaner(uncleanedJsonCode[1]);
 
                 tab1.populateScreen(weatherInfo);
                 setNotification(latitude,longitude,notificationActive,units);
