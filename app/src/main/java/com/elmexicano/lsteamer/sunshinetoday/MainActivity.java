@@ -17,6 +17,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -116,10 +117,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 e.printStackTrace();
             }
 
-            if(uncleanedJsonCode[1]!="ERROR"){
+            if(uncleanedJsonCode!=null){
+
+                Log.i("FULL first",uncleanedJsonCode[0]);
 
 
-                String[] weatherInfo = jsonCleaner(uncleanedJsonCode[1]);
+                String[] weatherInfo = jsonCleaner(uncleanedJsonCode);
 
                 tab1.populateScreen(weatherInfo);
                 setNotification(latitude,longitude,notificationActive,units);
@@ -165,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     //JSON info gets sent and cleans the relevant info.
     //Also the pertinent methods get called
-    public String[] jsonCleaner(String result) {
+    public String[] jsonCleaner(String[] result) {
 
         ArrayList<String> table = new ArrayList<String>();
 
@@ -174,15 +177,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         SimpleDateFormat dayDateStack = new SimpleDateFormat("EEE, MMM d");
 
         String[] weatherInfoStrings = new String[9];
-        String locationWeather="";
         try {
 
 
-            JSONObject weatherJSONObj = new JSONObject(result);
+            JSONObject weatherJSONObj = new JSONObject(result[1]);
 
             //String that will get the Name of the location.
             JSONObject cityInfo = weatherJSONObj.getJSONObject("city");
-            locationWeather = cityInfo.getString("name");
+            weatherInfoStrings[6] = cityInfo.getString("name");
 
             //And the following process will get the info for all of the Following days.
             JSONArray weatherJSONArray = weatherJSONObj.getJSONArray("list");
@@ -213,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 highAndLow = formatHighLows(high, low);
 
                 if(i==0){
-                    weatherInfoStrings [1] = Long.toString(Math.round((high+low)/2)) + "\u00B0";
+                    //weatherInfoStrings [1] = Long.toString(Math.round((high+low)/2)) + "\u00B0";
                     weatherInfoStrings [2] = mainTemperature;
                     weatherInfoStrings [3] = description;
                     weatherInfoStrings [4] = highAndLow;
@@ -235,9 +237,91 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             }
 
-
             if(weatherJSONArray.length()>1)
                 tab2.populateList(table);
+
+            weatherJSONObj = new JSONObject(result[0]);
+
+
+
+
+            //Object to get the Temperature
+            JSONObject tempInfo = weatherJSONObj.getJSONObject("main");
+            double currentTemp = tempInfo.getDouble("temp");
+            weatherInfoStrings [1] = Long.toString(Math.round(currentTemp)) + "\u00B0";
+
+
+
+            //Object gets the location
+            weatherInfoStrings[6] = weatherJSONObj.getString("name");
+
+            //Object to get the icon ID, the Main Weather and it's description
+            JSONObject weatherInfo = weatherJSONObj.getJSONObject("weather");
+            //MAIN
+            weatherInfoStrings [2] = weatherInfo.getString("main");
+            //DESCRIPTION
+            String description = weatherInfo.getString("description");
+            weatherInfoStrings [3] = description.substring(0,1).toUpperCase() + description.substring(1);
+            //ID
+            weatherInfoStrings [5] = weatherInfo.getString("id");
+
+
+
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        cal = Calendar.getInstance();
+        dayDateStack = new SimpleDateFormat("MMMM d, h:mm a");
+        weatherInfoStrings[0]=dayDateStack.format(cal.getTime())+" - "+ weatherInfoStrings[6];
+
+        return weatherInfoStrings;
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //JSON CLEANER For Weather. Current day
+    public String[] jsonCleanerWeather(String result) {
+
+
+        cal = Calendar.getInstance();
+        SimpleDateFormat dayDateStack = new SimpleDateFormat("EEE, MMM d");
+
+        String[] weatherInfoStrings = new String[9];
+        String locationWeather="";
+        try {
+
+
+            JSONObject weatherJSONObj = new JSONObject(result);
+
+            //Object gets the location
+            locationWeather = weatherJSONObj.getString("name");
+
+            //Object to get the icon ID, the Main Weather and it's description
+            JSONObject weatherInfo = weatherJSONObj.getJSONObject("weather");
+            //MAIN
+            weatherInfoStrings [2] = weatherInfo.getString("main");
+            //DESCRIPTION
+            String description = weatherInfo.getString("description");
+            weatherInfoStrings [3] = description.substring(0,1).toUpperCase() + description.substring(1);
+            //ID
+            weatherInfoStrings [5] = weatherInfo.getString("id");
+
+
+
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -252,6 +336,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     }
+
+
+
 
     //Gives you an average for the day temperature
     private String formatHighLows(double high, double low) {

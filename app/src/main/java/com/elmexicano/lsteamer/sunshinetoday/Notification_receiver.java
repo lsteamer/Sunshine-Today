@@ -67,12 +67,12 @@ public class Notification_receiver extends BroadcastReceiver {
             e.printStackTrace();
         }
 
-        if(uncleanedJsonCode[1]!="ERROR"){
+        if(uncleanedJsonCode!=null){
 
             Calendar cal = Calendar.getInstance();
             SimpleDateFormat notificationDateFormat = new SimpleDateFormat("EEE MMM d");
 
-            String[] weatherInfo = cleaner.jsonCleaner(uncleanedJsonCode[1]);
+            String[] weatherInfo = cleaner.jsonCleaner(uncleanedJsonCode);
             //Today's date
             backNotify[0] = "Forecast for " + notificationDateFormat.format(cal.getTime());
             //Today's highest

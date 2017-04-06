@@ -26,6 +26,7 @@ public class Tab1Today extends Fragment{
 
     public void populateScreen(String... strings){
 
+
         //Declaring the List
         textTodayDate = (TextView) getActivity().findViewById(R.id.weatherdatelocation);
         textDegrees = (TextView) getActivity().findViewById(R.id.textdegrees);
@@ -78,6 +79,7 @@ public class Tab1Today extends Fragment{
             return R.drawable.cloudy;
         return -1;
     }
+
     public static boolean getSunOrMoon(){
 
         return true;
