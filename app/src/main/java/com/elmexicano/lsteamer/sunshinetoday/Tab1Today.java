@@ -37,7 +37,7 @@ public class Tab1Today extends Fragment{
         imageWeather.setImageResource(getWeatherImage(Integer.valueOf(strings[5])));
         textTodayDate.setText(strings[0]);
         textDegrees.setText(strings[1]);
-        textMainWeather.setText(strings[2]);
+        //textMainWeather.setText(strings[2]);
         textDescriptionWeather.setText(strings[3]);
         textHighLow.setText(strings[4]);
 

@@ -14,7 +14,7 @@
         android:id="@+id/weatherdatelocation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="19dp"
+        android:layout_marginTop="11dp"
         android:text="12 of April"
         android:textSize="20dp"
         android:layout_alignParentTop="true"
@@ -25,53 +25,58 @@
         android:id="@+id/textdegrees"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/weatherdatelocation"
-        android:layout_marginEnd="11dp"
-        android:layout_marginRight="11dp"
-        android:layout_marginTop="16dp"
-        android:textSize="120dp"
-        tools:text="16*" />
+        android:textSize="110dp"
+        tools:text="16*"
+        android:layout_marginBottom="80dp"
+        android:layout_above="@+id/highlow"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
     <TextView
         android:id="@+id/mainweather"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:text="Main"
-        android:textSize="30dp"
-        android:layout_below="@+id/highlow"
-        android:layout_alignLeft="@+id/imageweather"
-        android:layout_alignStart="@+id/imageweather" />
+        android:layout_alignEnd="@+id/imageweather"
+        android:layout_alignRight="@+id/imageweather"
+        android:layout_below="@+id/imageweather"
+        android:layout_marginTop="42dp"
+        android:textSize="30dp" />
 
     <TextView
         android:id="@+id/mainweatherdescription"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="20dp"
-        tools:text="Description"
-        android:layout_below="@+id/mainweather"
-        android:layout_alignLeft="@+id/mainweather"
-        android:layout_alignStart="@+id/mainweather" />
+        android:layout_alignTop="@+id/highlow"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_toEndOf="@+id/textdegrees"
+        android:layout_toRightOf="@+id/textdegrees"
+        android:textSize="25dp"
+        tools:text="Description" />
 
     <TextView
         android:id="@+id/highlow"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="33dp"
-        tools:text="high / low"
-        android:layout_centerVertical="true"
-        android:layout_alignLeft="@+id/textdegrees"
-        android:layout_alignStart="@+id/textdegrees" />
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="109dp"
+        android:layout_marginLeft="13dp"
+        android:layout_marginStart="13dp"
+        android:textSize="25dp"
+        tools:text="high / low" />
 
     <ImageView
         android:id="@+id/imageweather"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:srcCompat="@drawable/common_google_signin_btn_icon_dark_normal_background"
-        android:layout_alignBottom="@+id/textdegrees"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_marginLeft="29dp"
+        android:layout_marginStart="29dp"
+        android:layout_marginTop="28dp"
+        android:layout_alignTop="@+id/textdegrees"
+        android:layout_alignLeft="@+id/mainweatherdescription"
+        android:layout_alignStart="@+id/mainweatherdescription" />
 
 </RelativeLayout>

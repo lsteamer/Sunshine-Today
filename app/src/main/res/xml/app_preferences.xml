@@ -25,9 +25,8 @@
         <EditTextPreference
             android:title="Change Location"
             android:dependency="location_preference"
-            android:summary="Type a new Postal Code"
+            android:summary="Enter a Postal Code or a City name"
             android:key="postal_code"
-            android:numeric="integer"
             />
 
     </PreferenceCategory>

@@ -81,7 +81,7 @@ class DownloadTask extends AsyncTask<String, Void, String[]> {
                 UriW = Uri.parse(WEATHER_BASE_URL).buildUpon()
                         .appendQueryParameter(POSTAL_CODE, strings[0])
                         .appendQueryParameter(FORMAT_PARAM, format)
-                        .appendQueryParameter(UNITS_PARAM, strings[2])
+                        .appendQueryParameter(UNITS_PARAM, strings[1])
                         .appendQueryParameter(APPID_PARAM, appid)
                         .build();
 

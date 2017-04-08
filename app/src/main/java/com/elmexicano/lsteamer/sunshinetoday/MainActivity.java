@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -17,7 +16,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -69,19 +67,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private String postalCode;
     private boolean locationCurrent;
     private boolean notificationActive;
-    private String notificationTime="1";
 
 
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private DownloadTask weatherAsyncTask = null;
-
-
-    //Array List that will hold the weather forecast.
-    private ArrayList<String> weatherForecast = new ArrayList<String>();
-
-
-    private LocationManager locationManager;
 
     @Override
     public void onConnected(Bundle connectionHint) {
@@ -119,8 +109,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             if(uncleanedJsonCode!=null){
 
-                Log.i("FULL first",uncleanedJsonCode[0]);
-
 
                 String[] weatherInfo = jsonCleaner(uncleanedJsonCode);
 
@@ -148,9 +136,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Toast.makeText(this, NOT_ONLINE,
                 Toast.LENGTH_LONG).show();
 
-        /*
-            Fill with placeholder info.
-         */
 
     }
 
@@ -174,17 +159,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
         cal = Calendar.getInstance();
-        SimpleDateFormat dayDateStack = new SimpleDateFormat("EEE, MMM d");
+        SimpleDateFormat dayDateStack = new SimpleDateFormat("EEE MM/d");
 
         String[] weatherInfoStrings = new String[9];
         try {
 
-
+            //result[1] holds the forecast for the upcoming days
             JSONObject weatherJSONObj = new JSONObject(result[1]);
-
-            //String that will get the Name of the location.
-            JSONObject cityInfo = weatherJSONObj.getJSONObject("city");
-            weatherInfoStrings[6] = cityInfo.getString("name");
 
             //And the following process will get the info for all of the Following days.
             JSONArray weatherJSONArray = weatherJSONObj.getJSONArray("list");
@@ -215,7 +196,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 highAndLow = formatHighLows(high, low);
 
                 if(i==0){
-                    //weatherInfoStrings [1] = Long.toString(Math.round((high+low)/2)) + "\u00B0";
+                    //If we don't need this for the Forecast, but for the current day
                     weatherInfoStrings [2] = mainTemperature;
                     weatherInfoStrings [3] = description;
                     weatherInfoStrings [4] = highAndLow;
@@ -224,119 +205,49 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     weatherInfoStrings [8] = Long.toString(Math.round((low)));
                 }
                 else{
+                    //If we need this for the Forecast
 
                     cal = Calendar.getInstance();
                     //Getting the calendar instance and then getting
                     cal.add(Calendar.DAY_OF_YEAR, i);
 
-                    //table.add(String.format("%s %-20s: %s",dayDateStack.format(cal.getTime()), mainTemperature, highAndLow));
-
-                    table.add(dayDateStack.format(cal.getTime()) +" -    " +description + ": " + highAndLow );
+                    table.add(dayDateStack.format(cal.getTime()) +" - " +description + ": " + highAndLow );
                 }
 
 
             }
 
+            //Fill in the Forecast tab
             if(weatherJSONArray.length()>1)
                 tab2.populateList(table);
 
+            //Now to get the weather
             weatherJSONObj = new JSONObject(result[0]);
 
 
-
-
-            //Object to get the Temperature
+            //Finally, get the daily temperature
             JSONObject tempInfo = weatherJSONObj.getJSONObject("main");
             double currentTemp = tempInfo.getDouble("temp");
             weatherInfoStrings [1] = Long.toString(Math.round(currentTemp)) + "\u00B0";
 
-
-
-            //Object gets the location
+            //And the location
             weatherInfoStrings[6] = weatherJSONObj.getString("name");
-
-            //Object to get the icon ID, the Main Weather and it's description
-            JSONObject weatherInfo = weatherJSONObj.getJSONObject("weather");
-            //MAIN
-            weatherInfoStrings [2] = weatherInfo.getString("main");
-            //DESCRIPTION
-            String description = weatherInfo.getString("description");
-            weatherInfoStrings [3] = description.substring(0,1).toUpperCase() + description.substring(1);
-            //ID
-            weatherInfoStrings [5] = weatherInfo.getString("id");
-
-
 
 
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
+        //Get the Header, including Date and Location
         cal = Calendar.getInstance();
         dayDateStack = new SimpleDateFormat("MMMM d, h:mm a");
         weatherInfoStrings[0]=dayDateStack.format(cal.getTime())+" - "+ weatherInfoStrings[6];
 
+        //return the Info of the current day
         return weatherInfoStrings;
 
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //JSON CLEANER For Weather. Current day
-    public String[] jsonCleanerWeather(String result) {
-
-
-        cal = Calendar.getInstance();
-        SimpleDateFormat dayDateStack = new SimpleDateFormat("EEE, MMM d");
-
-        String[] weatherInfoStrings = new String[9];
-        String locationWeather="";
-        try {
-
-
-            JSONObject weatherJSONObj = new JSONObject(result);
-
-            //Object gets the location
-            locationWeather = weatherJSONObj.getString("name");
-
-            //Object to get the icon ID, the Main Weather and it's description
-            JSONObject weatherInfo = weatherJSONObj.getJSONObject("weather");
-            //MAIN
-            weatherInfoStrings [2] = weatherInfo.getString("main");
-            //DESCRIPTION
-            String description = weatherInfo.getString("description");
-            weatherInfoStrings [3] = description.substring(0,1).toUpperCase() + description.substring(1);
-            //ID
-            weatherInfoStrings [5] = weatherInfo.getString("id");
-
-
-
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        cal = Calendar.getInstance();
-        dayDateStack = new SimpleDateFormat("MMMM d, h:mm a");
-        weatherInfoStrings[0]=dayDateStack.format(cal.getTime())+" - "+ locationWeather;
-        weatherInfoStrings[6] = locationWeather;
-
-        return weatherInfoStrings;
-
-
-    }
-
 
 
 
@@ -346,7 +257,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         long roundedHigh = Math.round(high);
         long roundedLow = Math.round(low);
 
-        String highLowStr = roundedHigh + "\u00B0/" + roundedLow+"\u00B0";
+        String highLowStr = roundedHigh + "\u00B0\u2191/" + roundedLow+"\u00B0\u2193";
         return highLowStr;
     }
 
@@ -370,9 +281,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
 
-
+        //If you have the Location variables. Save them
         if(savedInstanceState!=null){
-
             latitude = (String) savedInstanceState.get("Latitude");
             longitude = (String) savedInstanceState.get("Longitude");
         }
@@ -492,52 +402,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         else
             postalCode = sharedPreferences.getString("postal_code",null);
 
-        /*
-        if(weatherAsyncTask!=null)
-            refillApp();
-        * */
 
 
     }
-    /*
-    CODE THAT MIGHT BE RENDERED USELESS
-    private void refillApp(){
-        //For some reason constantly calling weatherAsyncTask caused the app to crash
-        weatherAsyncTask=null;
-        weatherAsyncTask = new DownloadTask();
 
-        Log.i("watwat",postalCode);
-        //String to receive the code
-        String uncleanedJsonCode="";
-        try {
-            //if we don't have a new Postal Code to try out
-            if(postalCode==null)
-                uncleanedJsonCode = weatherAsyncTask.execute(latitude,longitude,units,days).get();
-            else
-                uncleanedJsonCode = weatherAsyncTask.execute(postalCode,units,days).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-
-        if(uncleanedJsonCode!="ERROR"){
-
-
-            String[] weatherInfo = jsonCleaner(uncleanedJsonCode);
-
-            tab1.populateScreen(weatherInfo);
-            setNotification(latitude,longitude);
-
-        }
-        else{
-            Toast.makeText(this, NOT_ONLINE,
-                    Toast.LENGTH_LONG).show();
-        }
-
-
-    }
-    */
 
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
