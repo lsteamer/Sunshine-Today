@@ -16,6 +16,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private String postalCode;
     private boolean locationCurrent;
     private boolean notificationActive;
+    private boolean isAlarmSet;
 
 
     private GoogleApiClient mGoogleApiClient;
@@ -327,12 +329,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     protected void setNotification(String lat, String lon, boolean activeNotification, String unitValue){
 
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        isAlarmSet = sharedPreferences.getBoolean("alarm_set",true);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
         Calendar calen = Calendar.getInstance();
         calen.set(Calendar.MINUTE, 30);
         calen.set(Calendar.HOUR_OF_DAY, 06);
         //Setting the notification
 
-        if(activeNotification) {
+
+        if(activeNotification&&isAlarmSet==true) {
             calen.set(Calendar.MINUTE, 0);
 
 
@@ -353,12 +360,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             //Setting the Alarm. RTC_WAKEUP will Go even if the device is sleep, next is when is the alarm going off, next is how often (INTERVAL_DAY is each a day)
             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calen.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+
+
+            editor.putBoolean("alarm_set",false).apply();
+
         }
-        else{
+        else if (activeNotification==false){
             Intent intent = new Intent(this, Notification_receiver.class);
             PendingIntent sender = PendingIntent.getBroadcast(getApplicationContext(), 237, intent, PendingIntent.FLAG_UPDATE_CURRENT);
             AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
             alarmManager.cancel(sender);
+            editor.putBoolean("alarm_set",true).apply();
         }
     }
 
@@ -396,6 +408,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         units = sharedPreferences.getString("degree_preference","metric");
         days = sharedPreferences.getString("day_preference","10");
         notificationActive = sharedPreferences.getBoolean("daily_notifications",true);
+
         locationCurrent = sharedPreferences.getBoolean("location_preference",true);
         if(locationCurrent)
             postalCode = null;
